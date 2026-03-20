@@ -135,7 +135,7 @@ dist_accel(t >= 4 & t <= 5) = 0.5;
 
 ## Sensor Delay Analysis
 
-Models real-world sensor latency using **Padé approximation** of e^(-τs):
+Models real-world sensor latency using **Pade approximation** of e^(-τs):
 
 ```matlab
 delays = 0 : 0.2 : 1.0;    % 0ms to 1000ms
