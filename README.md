@@ -151,9 +151,9 @@ sys_delayed = delay_mimo * sys_tracking;
 | Delay | Effect |
 |-------|--------|
 | 0 ms | Clean response, meets all requirements |
-| 50–100 ms | Slight oscillations, still stable |
-| 200–300 ms | Increased oscillations, may violate requirements |
-| 500 ms+ | System may become unstable |
+| 100–300 ms | Slight oscillations, still stable |
+| 300–600 ms | Increased oscillations, may violate requirements |
+| 600 ms+ | System may become unstable |
 
 ---
 
