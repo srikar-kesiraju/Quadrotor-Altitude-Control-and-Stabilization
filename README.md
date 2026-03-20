@@ -124,13 +124,16 @@ Simulates a drone moving from the origin to the desired state:
 xd = [1; 0; 0.1; 0];       % z = 1m, theta = 0.1 rad
 xo = [0; 0; 0; 0];         % starting at rest
 ```
-
+### Target Tracking
+![Target Response](results/target_response.png)
+---
 ### Part B — Disturbance Rejection
 Injects a disturbance between t = 4s and t = 5s to test robustness:
 ```matlab
 dist_accel(t >= 4 & t <= 5) = 0.5;
 ```
-
+### Disturbance Rejection
+![Disturbance Response](results/disturbance_response.png)
 ---
 
 ## Sensor Delay Analysis
