@@ -133,7 +133,7 @@ Injects a disturbance between t = 4s and t = 5s to test robustness:
 dist_accel(t >= 4 & t <= 5) = 0.5;
 ```
 ### Disturbance Rejection
-![Disturbance Response](results/disturbance_response.png)
+![Disturbance Response](results/Disturbance_Response.png)
 ---
 
 ## Sensor Delay Analysis
