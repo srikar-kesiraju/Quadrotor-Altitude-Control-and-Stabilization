@@ -132,7 +132,7 @@ disp(Ideal_Results);
 %% 
 % Part B
 % 
-% Testing wheter it will sustain if a disturbance occurs.
+% Testing whether it will sustain if a disturbance occurs.
 
 
 dist_accel = zeros(length(t), 1);
@@ -146,7 +146,7 @@ yline(xd_red(1), '--r', 'Target');
 grid on; title('Altitude (z) with Disturbance'); ylabel('Meters (m)');
 legend('Response', 'Target');
 %% 
-% Checking whether the design requirements are satified or not
+% Checking whether the design requirements are satisfied or not
 
 sys_z = ss(A_cl(1:2,1:2), B(1:2,1)*kd(1,1), C(1:2,1:2), D(1:2,1));
 info_z = stepinfo(sys_z);
@@ -161,73 +161,94 @@ Disturbed_Results=table({'Altitude (z)';'Pitch (theta)'},...
 fprintf('\n--- Baseline MIMO Disturbed Input Performance (Ideal Case) ---\n')
 disp(Disturbed_Results);
 %% 
-% Effect of Sensor Delay on Target reaching
-
-delays=0:0.2:1;
+%% Effect of Sensor Delay on Target Reaching
+delays = 0:0.2:1;
 colors = lines(length(delays));
-required_info=zeros(length(delays),4);
+required_info = zeros(length(delays), 4);
+
 figure('Name', 'Sensor Delay Sensitivity Study');
 ax1 = subplot(2,2,1); hold on; grid on; title('Altitude (z)'); ylabel('m');
 ax2 = subplot(2,2,2); hold on; grid on; title('Vertical Velocity (w)'); ylabel('m/s');
 ax3 = subplot(2,2,3); hold on; grid on; title('Pitch (\theta)'); ylabel('rad'); xlabel('Time (s)');
 ax4 = subplot(2,2,4); hold on; grid on; title('Pitch Rate (q)'); ylabel('rad/s'); xlabel('Time (s)');
-for i=1:length(delays)
-    currentdelay=delays(i);
-    if currentdelay==0
-        [ysim,t_sim]=lsim(sys_tracking,repmat(xd_red',length(t),1),t,xo);
-        step_info=stepinfo(ysim(:,1),t_sim,xd_red(1));
-        required_info(1,:)=[0,step_info.Overshoot,step_info.RiseTime,step_info.Peak];
+
+for i = 1:length(delays)
+    currentdelay = delays(i);
+
+    if currentdelay == 0
+        n_states = order(sys_tracking);
+        x0_full  = zeros(n_states, 1);
+        x0_full(1:length(xo)) = xo;
+        [y_sim, t_sim] = lsim(sys_tracking, repmat(xd_red',length(t),1), t, x0_full);
     else
-        [num,den]=pade(currentdelay,2);
-        delay_tf=tf(num,den);
-        delay_mimo=delay_tf*eye(4);
-        sys_delayed_loop=delay_mimo*sys_tracking;
-        [y_delayed,t_delayed]=lsim(sys_delayed_loop,repmat(xd_red',length(t),1),t,[xo;zeros(8,1)]);
-        s_info = stepinfo(y_delayed(:,1), t_delayed, xd_red(1));
-        required_info(i,:)=[currentdelay,s_info.Overshoot,s_info.RiseTime,s_info.Peak];
+        [num, den]       = pade(currentdelay, 2);
+        delay_tf         = tf(num, den);
+        delay_mimo       = delay_tf * eye(4);
+        sys_delayed_loop = delay_mimo * sys_tracking;   % ✅ correct order
+
+        n_states = order(sys_delayed_loop);
+        x0_full  = zeros(n_states, 1);
+        x0_full(1:length(xo)) = xo;
+        [y_sim, t_sim] = lsim(sys_delayed_loop, repmat(xd_red',length(t),1), t, x0_full);
     end
-    plot(ax1,t_delayed,y_delayed(:,1))
-    plot(ax2,t_delayed,y_delayed(:,2))
-    plot(ax3,t_delayed,y_delayed(:,3))
-    plot(ax4,t_delayed,y_delayed(:,4))
+
+    s_info = stepinfo(y_sim(:,1), t_sim, xd_red(1));
+    required_info(i,:) = [currentdelay, s_info.Overshoot, s_info.RiseTime, s_info.Peak];
+
+    % consistent variable names
+    plot(ax1, t_sim, y_sim(:,1), 'Color', colors(i,:), 'LineWidth', 1.5);
+    plot(ax2, t_sim, y_sim(:,2), 'Color', colors(i,:), 'LineWidth', 1.5);
+    plot(ax3, t_sim, y_sim(:,3), 'Color', colors(i,:), 'LineWidth', 1.5);
+    plot(ax4, t_sim, y_sim(:,4), 'Color', colors(i,:), 'LineWidth', 1.5);
 end
+
 T_results = array2table(required_info, ...
-    'VariableNames', {'Delay_Seconds', 'Overshoot_Percent', 'RiseTime_Seconds','Peak_Value'});
-fprintf('\n--- UAV Sensor Delay:-Target Analysis ---\n');
+    'VariableNames', {'Delay_Seconds','Overshoot_Percent','RiseTime_Seconds','Peak_Value'});
+fprintf('\n--- UAV Sensor Delay: Target Analysis ---\n');
 disp(T_results);
 yline(ax1, xd_red(1), '--r', 'Target');
 yline(ax3, xd_red(2), '--r', 'Target');
 legend(ax1, string(delays) + "s delay");
-%% 
-% Effect of Sensor delay on Disturbance Stability
 
-dist_results=zeros(length(delays),4);
+%% Effect of Sensor Delay on Disturbance Stability
+dist_results = zeros(length(delays), 4);
 figure('Name', 'Disturbance Rejection with Sensor Delay');
 ax_dist = subplot(1,1,1); hold on; grid on;
-title('Altitude (z) Recovery from 2s Disturbance');
+title('Altitude (z) Recovery from Disturbance');
 ylabel('Meters (m)'); xlabel('Time (s)');
-for i=1:length(delays)
-    currentdelay=delays(i);
-    if currentdelay==0
-        sys_loop=sys_tracking;
-        xo_loop=xo;
+
+for i = 1:length(delays)
+    currentdelay = delays(i);
+
+    if currentdelay == 0
+        sys_loop = sys_tracking;
+        n_states = order(sys_loop);
+        x0_loop  = zeros(n_states, 1);
+        x0_loop(1:length(xo)) = xo;
     else
-        [num,den]=pade(currentdelay,2);
-        sys_loop = tf(num,den) * eye(4) * sys_tracking;
-        xo_loop=[xo;zeros(8,1)];
+        [num, den] = pade(currentdelay, 2);
+        delay_mimo = tf(num,den) * eye(4);
+        sys_loop   = delay_mimo * sys_tracking;    % ✅ correct order
+
+        n_states = order(sys_loop);
+        x0_loop  = zeros(n_states, 1);
+        x0_loop(1:length(xo)) = xo;
     end
-    disturbed_input=repmat(xd_red',length(t),1)+[dist_accel,zeros(length(t),1)];
-    [y_dist,t_dist]=lsim(sys_loop,disturbed_input,t,xo_loop);
-    s_info_dist      = stepinfo(y_dist(:,1), t_dist, xd_red(1));
-    dist_results(i,:) = [currentdelay, ...
-                          s_info_dist.Overshoot, ...
-                          s_info_dist.RiseTime,...
-                          s_info_dist.Peak];
+
+    disturbed_input = repmat(xd_red', length(t), 1) + ...
+                      [dist_accel, zeros(length(t),1)];   % ✅ Nx2
+
+    [y_dist, t_dist] = lsim(sys_loop, disturbed_input, t, x0_loop);   % ✅ semicolon
+
+    s_info_dist    = stepinfo(y_dist(:,1), t_dist, xd_red(1));
+    dist_results(i,:) = [currentdelay, s_info_dist.Overshoot, ...
+                          s_info_dist.RiseTime, s_info_dist.Peak];
+
     plot(ax_dist, t_dist, y_dist(:,1), 'Color', colors(i,:), 'LineWidth', 1.5);
 end
-disturbed_result=array2table(dist_results,...
-    'VariableNames', {'Delay_Seconds', 'Overshoot_Percent', 'RiseTime_Seconds','Peak_Value'});
-fprintf('\n--- UAV Sensor Delay:- Disturbed input Analysis ---\n')
+disturbed_result = array2table(dist_results, ...
+    'VariableNames', {'Delay_Seconds','Overshoot_Percent','RiseTime_Seconds','Peak_Value'});
+fprintf('\n--- UAV Sensor Delay: Disturbed Input Analysis ---\n');
 disp(disturbed_result);
 yline(ax_dist, xd_red(1), '--r', 'Target');
 legend(ax_dist, string(delays) + "s delay");
