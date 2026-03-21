@@ -209,3 +209,9 @@ s_info = stepinfo(y_sim(:,1), t_sim, xd_red(1));
 - Sensor Delay significantly degrades the stability of the system, even when the poles are well placed.
 - A decoupled system may make the system simple, but it does not capture the real-life coupled effects.
 - The system becomes oscillatory beyond 200ms, which shows how sensitive the system is to the latency.
+
+## Technical Report
+
+A detailed report including system modeling, controller design, and delay analysis is available here:
+
+[Download Report](docs/quadrotor_control_report.pdf)
