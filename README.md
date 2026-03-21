@@ -214,4 +214,4 @@ s_info = stepinfo(y_sim(:,1), t_sim, xd_red(1));
 
 A detailed report including system modeling, controller design, and delay analysis is available here:
 
-[Download Report](docs/Quadrotor_Control_Report.pdf)
+[Download Report](docs/Quadrotor_Control_Report.docx)
